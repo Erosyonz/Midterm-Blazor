@@ -1,0 +1,59 @@
+@page "/contact"
+@inject TourService Tours
+<PageTitle>Contact | WanderNest Travel & Tours</PageTitle>
+
+<section class="page-hero contact-hero"><div class="wrap page-hero-content"><span class="eyebrow light-eyebrow">LET'S MAKE IT A GOOD ONE</span><h1>Let's Plan Your Next <em>Adventure</em></h1><p>Have questions about exploring Cordova, Cebu, or visiting nearby island destinations? Tell us what kind of trip you have in mind.</p></div></section>
+<section class="section wrap contact-layout">
+    <div class="contact-aside"><span class="eyebrow">WE'RE HERE TO HELP</span><h2>Every good trip<br />starts with a <em>hello.</em></h2><p>Use the form to explore a sample itinerary or get ideas for your next Cebu getaway.</p>
+        <div class="contact-info-card"><span class="info-icon">⌖</span><div><small>OUR AREA</small><strong>Cordova, Cebu, Philippines</strong><p>Service area: Cordova, Lapu-Lapu City, Mactan Island, and nearby Cebu destinations.</p></div></div>
+        <div class="contact-info-card"><span class="info-icon">✉</span><div><small>EMAIL PLACEHOLDER</small><strong>hello@wandernest.example</strong><p>Fictional contact detail for this demo website.</p></div></div>
+        <div class="contact-info-card"><span class="info-icon">◷</span><div><small>DEMO BUSINESS HOURS</small><strong>Monday–Saturday, 9 AM–5 PM</strong><p>Illustrative hours only; this is not an operating business.</p></div></div>
+        <div class="contact-note"><span>✳</span><p><strong>Good to know</strong><br />Island excursions depend on weather, local rules, and available operators. Always confirm details before travel.</p></div>
+    </div>
+    <div class="contact-form-card"><div class="form-heading"><span class="eyebrow">TRAVEL INQUIRY</span><h2>Tell us what you're dreaming of.</h2><p>All fields marked required must be completed. This form is a local frontend demonstration.</p></div>
+        @if (submitted)
+        {
+            <div class="success-panel"><span>✓</span><h3>Thanks for trying WanderNest!</h3><p>Your information passed local demonstration validation. Nothing has been sent or stored on a server.</p><button class="btn btn-primary" type="button" @onclick="ResetForm">Send another sample inquiry</button></div>
+        }
+        else
+        {
+            <EditForm Model="@form" OnValidSubmit="HandleSubmit" class="form-stack">
+                <DataAnnotationsValidator />
+                <div class="form-row"><label class="form-field">Full name<InputText @bind-Value="form.Name" placeholder="Your full name" autocomplete="name" /><ValidationMessage For="@(()=>form.Name)" /></label><label class="form-field">Email address<InputText type="email" @bind-Value="form.Email" placeholder="you@example.com" autocomplete="email" /><ValidationMessage For="@(()=>form.Email)" /></label></div>
+                <div class="form-row"><label class="form-field">Phone number <span class="optional">(optional)</span><InputText @bind-Value="form.Phone" placeholder="+63 ..." /></label><label class="form-field">Destination of interest<select @bind="form.Destination"><option value="">Choose a destination</option>@foreach(var d in Tours.GetDestinations()){<option value="@d.Name">@d.Name</option>}<option value="Custom itinerary">Custom itinerary / not sure</option></select></label></div>
+                <div class="form-row"><label class="form-field">Preferred travel date <span class="optional">(optional)</span><InputDate @bind-Value="form.PreferredDate" min="@(DateTime.Today.ToString("yyyy-MM-dd"))" /><ValidationMessage For="@(()=>form.PreferredDate)" />@if(dateError){<span class="validation-message">Please select today or a future date.</span>}</label><label class="form-field">Number of travelers<InputNumber @bind-Value="form.Travelers" min="1" max="50" /><ValidationMessage For="@(()=>form.Travelers)" /></label></div>
+                <div class="form-row"><label class="form-field">Budget range<select @bind="form.Budget"><option>Below ₱2,000</option><option>₱2,000–₱5,000</option><option>₱5,001–₱10,000</option><option>₱10,001–₱20,000</option><option>Above ₱20,000</option><option>Not sure yet</option></select></label><label class="form-field">Inquiry type<select @bind="form.InquiryType"><option>Destination Information</option><option>Tour Package</option><option>Island Excursion</option><option>Custom Itinerary</option><option>Group Travel</option><option>General Inquiry</option></select></label></div>
+                <label class="form-field">Your message<InputTextArea @bind-Value="form.Message" rows="5" placeholder="Tell us about your ideal trip..." /><ValidationMessage For="@(()=>form.Message)" /></label>
+                <button class="btn btn-primary submit-button" type="submit">Submit sample inquiry <span>↗</span></button><p class="form-disclaimer">Privacy note: this demo validates in your browser only. No information is transmitted or saved.</p>
+            </EditForm>
+        }
+    </div>
+</section>
+
+<section class="faq-section"><div class="wrap faq-layout"><div><span class="eyebrow">A FEW QUICK ANSWERS</span><h2>Good questions.<br /><em>Helpful answers.</em></h2><p>General planning information for this demonstration website.</p></div><div class="faq-list">
+@foreach(var faq in faqs)
+{
+    <details class="faq-item"><summary>@faq.Question <span>+</span></summary><p>@faq.Answer</p></details>
+}
+</div></div></section>
+@code {
+    private ContactMessage form = new();
+    private bool submitted;
+    private bool dateError;
+    private List<(string Question, string Answer)> faqs = new()
+    {
+        ("How do I plan a trip to Cordova?", "Start with the places you would like to see, your preferred date, and your budget. Check current access and transport options before setting off."),
+        ("What is included in a sample tour package?", "Each example lists suggested activities and illustrative inclusions. Transport, meals, fees, equipment, and other services are excluded unless explicitly confirmed by a real provider."),
+        ("Are the displayed package prices final?", "No. All prices are illustrative demonstration amounts, not live quotes or offers from an operating travel agency."),
+        ("How can I arrange an island excursion?", "Contact a legitimate local operator to confirm permitted routes, boat arrangements, fees, safety guidance, and availability."),
+        ("What happens if weather affects an excursion?", "Follow local advisories and the operator's safety instructions. Sea trips may be changed or cancelled when conditions are unsafe."),
+        ("Can I request a custom itinerary?", "Yes, the demonstration form includes a custom itinerary inquiry option. A real agency would need to confirm whether it can accommodate the request."),
+        ("How do cancellations and travel-date changes work?", "Policies vary by provider. Ask the actual operator for written terms before paying; this demo does not set or promise any cancellation policy.")
+    };
+    private void HandleSubmit()
+    {
+        dateError = form.PreferredDate.HasValue && form.PreferredDate.Value.Date < DateTime.Today;
+        if (!dateError) submitted = true;
+    }
+    private void ResetForm() { form = new ContactMessage(); submitted = false; dateError = false; }
+}

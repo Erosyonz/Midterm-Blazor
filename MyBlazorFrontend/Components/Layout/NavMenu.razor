@@ -1,0 +1,16 @@
+<header class="site-header">
+    <nav class="nav-shell" aria-label="Main navigation">
+        <a class="brand" href="/" aria-label="WanderNest home"><span class="brand-mark">W</span><span>WanderNest<small>TRAVEL & TOURS</small></span></a>
+        <button class="menu-toggle" type="button" aria-label="Toggle navigation" aria-expanded="@menuOpen" @onclick="() => menuOpen = !menuOpen">@(menuOpen ? "✕" : "☰")</button>
+        <div class="nav-links @(menuOpen ? "nav-open" : "")">
+            <NavLink href="/" Match="NavLinkMatch.All" @onclick="CloseMenu">Home</NavLink>
+            <NavLink href="/products" @onclick="CloseMenu">Destinations</NavLink>
+            <NavLink href="/contact" @onclick="CloseMenu">Contact</NavLink>
+            <a class="nav-cta" href="/products" @onclick="CloseMenu">Explore Trips <span>↗</span></a>
+        </div>
+    </nav>
+</header>
+@code {
+    private bool menuOpen;
+    private void CloseMenu() => menuOpen = false;
+}

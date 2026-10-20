@@ -1,0 +1,100 @@
+@page "/products"
+@inject TourService Tours
+@inject NavigationManager Navigation
+<PageTitle>Destinations | WanderNest Travel & Tours</PageTitle>
+
+<section class="page-hero destination-hero"><div class="wrap page-hero-content"><span class="eyebrow light-eyebrow">YOUR NEXT CHAPTER IS OUT THERE</span><h1>Find Your Perfect <em>Destination</em></h1><p>Discover the coastal beauty of Cordova, explore nearby island destinations, and find a sample tour that suits your travel style.</p></div></section>
+
+<section class="section wrap">
+    <div class="filter-panel">
+        <div class="filter-title"><div><span class="eyebrow">EXPLORE YOUR OPTIONS</span><h2>Where will you go?</h2></div><span class="result-count">@FilteredDestinations.Count() places to explore</span></div>
+        <div class="filter-grid">
+            <label class="filter-field wide-field"><span>Search destination</span><input type="search" placeholder="Try “Cordova” or “island”..." @bind="searchText" @bind:event="oninput" /></label>
+            <label class="filter-field"><span>Region</span><select @bind="selectedRegion"><option value="">All regions</option>@foreach (var region in regions){<option value="@region">@region</option>}</select></label>
+            <label class="filter-field"><span>Category</span><select @bind="selectedCategory"><option value="">All categories</option>@foreach (var category in categories){<option value="@category">@category</option>}</select></label>
+            <label class="filter-field"><span>Maximum budget</span><select @bind="budget"><option value="0">Any budget</option><option value="500">Up to ₱500</option><option value="1000">Up to ₱1,000</option><option value="2000">Up to ₱2,000</option><option value="3000">Up to ₱3,000</option></select></label>
+            <label class="filter-field"><span>Sort by</span><select @bind="sortBy"><option value="recommended">Recommended</option><option value="price-low">Price: low to high</option><option value="price-high">Price: high to low</option><option value="rating">Sample rating</option></select></label>
+        </div>
+        <div class="filter-bottom"><span>Prices and ratings are illustrative demo information.</span><button class="btn-reset" type="button" @onclick="ClearFilters">↺ Clear filters</button></div>
+    </div>
+
+    @if (!FilteredDestinations.Any())
+    {
+        <div class="empty-state"><span>⌕</span><h3>No destinations found</h3><p>Try another search or clear your filters to see all destinations.</p><button class="btn btn-primary" @onclick="ClearFilters">Clear filters</button></div>
+    }
+    else
+    {
+        <div class="destination-grid results-grid">
+            @foreach (var destination in FilteredDestinations)
+            {
+                <article class="destination-card">
+                    <div class="card-image"><img src="@destination.ImageUrl" alt="@destination.Name" loading="lazy" /><span class="image-tag">@destination.Category</span></div>
+                    <div class="card-body"><p class="card-location">⌖ @destination.Region</p><h3>@destination.Name</h3><p class="card-description">@destination.Description</p><div class="card-meta"><span class="rating">★ @destination.Rating.ToString("0.0") <small>sample</small></span><span class="price">From <strong>₱@destination.StartingPrice.ToString("N0")</strong></span></div><p class="duration-label">◷ @destination.Duration suggested</p><button class="card-link button-link" type="button" @onclick="() => ShowDestination(destination)">View details <span>→</span></button></div>
+                </article>
+            }
+        </div>
+    }
+</section>
+
+<section class="package-section"><div class="wrap"><div class="section-heading"><div><span class="eyebrow">SAMPLE TOUR IDEAS</span><h2>Choose your kind of <em>adventure.</em></h2></div></div><div class="package-grid">
+@foreach (var pack in Tours.GetPackages())
+{
+    <article class="package-card"><img src="@pack.ImageUrl" alt="@pack.Name" loading="lazy" /><div class="package-content"><span class="package-kicker">@pack.Category · @pack.DurationDays day</span><h3>@pack.Name</h3><p>@pack.Description</p><ul class="mini-list">@foreach(var item in pack.ItineraryHighlights.Take(2)){<li>✓ @item</li>}</ul><div class="package-bottom"><span>From <strong>₱@pack.PricePerPerson.ToString("N0")</strong><small>/ person · sample price</small></span><button type="button" class="small-action" @onclick="() => ShowPackage(pack)">Details ↗</button></div><button type="button" class="btn btn-primary full-button" @onclick="() => StartBooking(pack)">Plan this tour</button></div></article>
+}
+</div><p class="fine-print">These are illustrative packages, not confirmed services. No booking is transmitted or saved.</p></div></section>
+
+@if (selectedDestination is not null)
+{
+    <div class="modal-backdrop" role="presentation" @onclick="CloseModals">
+        <section class="modal-card" role="dialog" aria-modal="true" aria-labelledby="destination-modal-title" @onclick:stopPropagation="true">
+            <button class="modal-close" type="button" aria-label="Close details" @onclick="CloseModals">×</button><img class="modal-image" src="@selectedDestination.ImageUrl" alt="@selectedDestination.Name" />
+            <div class="modal-content"><span class="eyebrow">@selectedDestination.Category · @selectedDestination.Region</span><h2 id="destination-modal-title">@selectedDestination.Name</h2><p>@selectedDestination.Description</p><div class="modal-stats"><span>Suggested duration<strong>@selectedDestination.Duration</strong></span><span>Sample starting price<strong>₱@selectedDestination.StartingPrice.ToString("N0")</strong></span><span>Sample rating<strong>★ @selectedDestination.Rating.ToString("0.0")</strong></span></div><h3>Highlights</h3><ul class="detail-list">@foreach(var item in selectedDestination.Highlights){<li>✓ @item</li>}</ul><h3>Travel tip</h3><p>@selectedDestination.TravelTips</p><button class="btn btn-primary" type="button" @onclick="GoToContact">Plan your trip ↗</button></div>
+        </section>
+    </div>
+}
+@if (selectedPackage is not null && !bookingOpen)
+{
+    <div class="modal-backdrop" role="presentation" @onclick="CloseModals"><section class="modal-card" role="dialog" aria-modal="true" aria-labelledby="package-modal-title" @onclick:stopPropagation="true"><button class="modal-close" type="button" aria-label="Close package details" @onclick="CloseModals">×</button><img class="modal-image" src="@selectedPackage.ImageUrl" alt="@selectedPackage.Name" /><div class="modal-content"><span class="eyebrow">SAMPLE TOUR PACKAGE</span><h2 id="package-modal-title">@selectedPackage.Name</h2><p>@selectedPackage.Description</p><div class="modal-stats"><span>Duration<strong>@selectedPackage.DurationDays day</strong></span><span>Sample price<strong>₱@selectedPackage.PricePerPerson.ToString("N0") / person</strong></span></div><h3>Suggested itinerary</h3><ul class="detail-list">@foreach(var item in selectedPackage.ItineraryHighlights){<li>✓ @item</li>}</ul><h3>Included in this sample</h3><ul class="detail-list">@foreach(var item in selectedPackage.IncludedServices){<li>✓ @item</li>}</ul><h3>Not included unless confirmed</h3><ul class="detail-list">@foreach(var item in selectedPackage.ExcludedServices){<li>• @item</li>}</ul><button class="btn btn-primary" @onclick="() => StartBooking(selectedPackage)">Plan this tour ↗</button></div></section></div>
+}
+@if (bookingOpen && selectedPackage is not null)
+{
+    <div class="modal-backdrop" role="presentation" @onclick="CloseModals"><section class="modal-card form-modal" role="dialog" aria-modal="true" aria-labelledby="booking-title" @onclick:stopPropagation="true"><button class="modal-close" type="button" aria-label="Close booking form" @onclick="CloseModals">×</button><div class="modal-content"><span class="eyebrow">SAMPLE TRIP PLANNER</span><h2 id="booking-title">Plan your tour</h2><p class="selected-tour">@selectedPackage.Name · <strong>₱@selectedPackage.PricePerPerson.ToString("N0") / person</strong></p>
+        @if (bookingSubmitted){<div class="success-panel"><span>✓</span><h3>Sample request validated!</h3><p>Your sample booking request passed local validation. This is a demonstration only; no booking has been sent or saved.</p><button class="btn btn-primary" @onclick="CloseModals">Done</button></div>}
+        else {<EditForm Model="booking" OnValidSubmit="SubmitBooking" class="form-stack"><DataAnnotationsValidator /><label class="form-field">Full name<InputText @bind-Value="booking.FullName" placeholder="Your full name" /><ValidationMessage For="@(()=>booking.FullName)" /></label><label class="form-field">Email address<InputText type="email" @bind-Value="booking.Email" placeholder="you@example.com" /><ValidationMessage For="@(()=>booking.Email)" /></label><label class="form-field">Preferred travel date<InputDate @bind-Value="booking.TravelDate" min="@(DateTime.Today.AddDays(1).ToString("yyyy-MM-dd"))" /><ValidationMessage For="@(()=>booking.TravelDate)" />@if(dateError){<span class="validation-message">Please choose a future date.</span>}</label><label class="form-field">Number of travelers<InputNumber @bind-Value="booking.Travelers" min="1" max="50" /><ValidationMessage For="@(()=>booking.Travelers)" /></label><label class="form-field">Additional requests (optional)<InputTextArea @bind-Value="booking.Requests" rows="3" placeholder="Anything you'd like us to know?" /></label><div class="form-actions"><button class="btn btn-outline" type="button" @onclick="CloseModals">Cancel</button><button class="btn btn-primary" type="submit">Validate sample request</button></div><p class="form-disclaimer">Demo only. No booking is sent to a server.</p></EditForm>}
+    </div></section></div>
+}
+
+@code {
+    private string searchText = "";
+    private string selectedRegion = "";
+    private string selectedCategory = "";
+    private string budget = "0";
+    private string sortBy = "recommended";
+    private Destination? selectedDestination;
+    private TourPackage? selectedPackage;
+    private bool bookingOpen;
+    private bool bookingSubmitted;
+    private bool dateError;
+    private BookingRequest booking = new();
+    private List<Destination> allDestinations => Tours.GetDestinations();
+    private string[] regions => allDestinations.Select(d => d.Region.Contains("Nearby") ? "Nearby island excursion, Cebu" : d.Region.Contains("Near Cordova") ? "Near Cordova, Cebu" : d.Region.Contains("Mactan") ? "Cordova / Mactan, Cebu" : "Cordova, Cebu").Distinct().ToArray();
+    private string[] categories => allDestinations.Select(d => d.Category).Distinct().OrderBy(x => x).ToArray();
+    private IEnumerable<Destination> FilteredDestinations {
+        get {
+            var result = allDestinations.AsEnumerable();
+            if (!string.IsNullOrWhiteSpace(searchText)) result = result.Where(d => (d.Name + " " + d.Description + " " + d.Region + " " + d.Category).Contains(searchText.Trim(), StringComparison.OrdinalIgnoreCase));
+            if (!string.IsNullOrWhiteSpace(selectedRegion)) result = result.Where(d => d.Region.Contains(selectedRegion, StringComparison.OrdinalIgnoreCase) || (selectedRegion == "Cordova, Cebu" && d.Region.Contains("Cordova", StringComparison.OrdinalIgnoreCase)));
+            if (!string.IsNullOrWhiteSpace(selectedCategory)) result = result.Where(d => d.Category == selectedCategory);
+            if (decimal.TryParse(budget, out var max) && max > 0) result = result.Where(d => d.StartingPrice <= max);
+            result = sortBy switch { "price-low" => result.OrderBy(d => d.StartingPrice), "price-high" => result.OrderByDescending(d => d.StartingPrice), "rating" => result.OrderByDescending(d => d.Rating), _ => result.OrderBy(d => d.Id) };
+            return result;
+        }
+    }
+    private void ClearFilters() { searchText = ""; selectedRegion = ""; selectedCategory = ""; budget = "0"; sortBy = "recommended"; }
+    private void ShowDestination(Destination destination) { selectedDestination = destination; selectedPackage = null; bookingOpen = false; }
+    private void ShowPackage(TourPackage pack) { selectedPackage = pack; selectedDestination = null; bookingOpen = false; }
+    private void StartBooking(TourPackage pack) { selectedPackage = pack; selectedDestination = null; bookingOpen = true; bookingSubmitted = false; dateError = false; booking = new BookingRequest { TravelDate = DateTime.Today.AddDays(7), Travelers = 1 }; }
+    private void CloseModals() { selectedDestination = null; selectedPackage = null; bookingOpen = false; bookingSubmitted = false; dateError = false; }
+    private void SubmitBooking() { dateError = booking.TravelDate is null || booking.TravelDate.Value.Date <= DateTime.Today; if (!dateError) bookingSubmitted = true; }
+    private void GoToContact() { CloseModals(); Navigation.NavigateTo("/contact"); }
+}
